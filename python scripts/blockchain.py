@@ -205,6 +205,11 @@ def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
     proof = blockchain.proof_of_work(last_block)
+    if len(blockchain.current_transactions) < 3:
+        response = {
+            'message' : "Not enough transactions available",
+        }
+        return jsonify(response), 200
 
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
@@ -217,7 +222,6 @@ def mine():
     # Forge the new Block by adding it to the chain
     previous_hash = blockchain.hash(last_block)
     block = blockchain.new_block(proof, previous_hash)
-
     response = {
         'message': "New Block Forged",
         'index': block['index'],
@@ -239,7 +243,6 @@ def new_transaction():
 
     # Create a new Transaction
     index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
-
     response = {'message': 'Transaction will be added to Block {index}'}
     return jsonify(response), 201
 

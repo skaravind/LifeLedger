@@ -20,7 +20,6 @@ class Blockchain:
     def register_node(self, address):
         """
         Add a new node to the list of nodes
-
         :param address: Address of node. Eg. 'http://192.168.0.5:5000'
         """
 
@@ -37,7 +36,6 @@ class Blockchain:
     def valid_chain(self, chain):
         """
         Determine if a given blockchain is valid
-
         :param chain: A blockchain
         :return: True if valid, False if not
         """
@@ -67,7 +65,6 @@ class Blockchain:
         """
         This is our consensus algorithm, it resolves conflicts
         by replacing our chain with the longest one in the network.
-
         :return: True if our chain was replaced, False if not
         """
 
@@ -100,7 +97,6 @@ class Blockchain:
     def new_block(self, proof, previous_hash):
         """
         Create a new Block in the Blockchain
-
         :param proof: The proof given by the Proof of Work algorithm
         :param previous_hash: Hash of previous Block
         :return: New Block
@@ -123,7 +119,6 @@ class Blockchain:
     def new_transaction(self, sender, recipient, amount):
         """
         Creates a new transaction to go into the next mined Block
-
         :param sender: Address of the Sender
         :param recipient: Address of the Recipient
         :param amount: Amount
@@ -137,6 +132,23 @@ class Blockchain:
 
         return self.last_block['index'] + 1
 
+    ##### New Transaction Origin #############
+
+    def new_transaction_origin(self, sender, name, gender, blood_group, amount, mother_hash, father_hash, previous_hash ):
+        
+        self.current_transactions.append({
+            'sender': sender,
+            'name': name,
+            'gender': gender,
+            'blood_group': blood_group,
+            'amount': amount,
+            'mother_hash': mother_hash,
+            'father_hash': father_hash,
+            'previous_hash': previous_hash   
+        })
+
+        return self.last_block['index'] + 1
+
     @property
     def last_block(self):
         return self.chain[-1]
@@ -145,7 +157,6 @@ class Blockchain:
     def hash(block):
         """
         Creates a SHA-256 hash of a Block
-
         :param block: Block
         """
 
@@ -156,7 +167,6 @@ class Blockchain:
     def proof_of_work(self, last_block):
         """
         Simple Proof of Work Algorithm:
-
          - Find a number p' such that hash(pp') contains leading 4 zeroes
          - Where p is the previous proof, and p' is the new proof
          
@@ -177,12 +187,10 @@ class Blockchain:
     def valid_proof(last_proof, proof, last_hash):
         """
         Validates the Proof
-
         :param last_proof: <int> Previous Proof
         :param proof: <int> Current Proof
         :param last_hash: <str> The hash of the Previous Block
         :return: <bool> True if correct, False if not.
-
         """
 
         guess = (str(last_proof)+str(proof)+str(last_hash)).encode()
@@ -205,11 +213,6 @@ def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
     proof = blockchain.proof_of_work(last_block)
-    if len(blockchain.current_transactions) < 3:
-        response = {
-            'message' : "Not enough transactions available",
-        }
-        return jsonify(response), 200
 
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
@@ -222,6 +225,7 @@ def mine():
     # Forge the new Block by adding it to the chain
     previous_hash = blockchain.hash(last_block)
     block = blockchain.new_block(proof, previous_hash)
+
     response = {
         'message': "New Block Forged",
         'index': block['index'],
@@ -243,9 +247,32 @@ def new_transaction():
 
     # Create a new Transaction
     index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
-    response = {'message': 'Transaction will be added to Block {index}'}
+
+    response = {'message': 'Transaction will be added to Block %d'%index}
     return jsonify(response), 201
 
+#Creation of Origin block that is for the new user(new born) in the system
+@app.route('/transactions/origin', methods=['POST'])
+def new_transaction_origin():
+    sender = str(request.form['sender'])
+    recipient = str(request.form['name'])
+    amount = str(request.form['amount'])
+    '''
+    gender = str(request.form['gender'])
+    blood_group = str(request.form['blood_group'])
+    
+    mother_hash = str(request.form['fother_hash'])
+    father_hash = str(request.form['father_hash'])
+    previous_hash = 1
+'''
+    #Add the data into the block
+    index = blockchain.new_transaction(sender, recipient, amount)# created for that person
+# @app.route('/transactions/legacy', methods=['POST'])
+# def origin():
+    
+#     #Add the data into the block
+#     index = blockchain.new_transaction_origin(values['sender'], values['recipient'], values['amount'])
+#     #code......
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
@@ -300,4 +327,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     port = args.port
 
-    app.run(host='0.0.0.0', port=port)
+app.run(host='0.0.0.0', port=port)
